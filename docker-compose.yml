@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: moncada_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-moncada}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-moncada123}
+      POSTGRES_DB: ${POSTGRES_DB:-moncada_gold}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - moncada-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moncada} -d ${POSTGRES_DB:-moncada_gold}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: moncada_app
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-moncada}:${POSTGRES_PASSWORD:-moncada123}@db:5432/${POSTGRES_DB:-moncada_gold}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - moncada-network
+    restart: on-failure
+
+networks:
+  moncada-network:
+    driver: bridge
+    name: moncada-network
+
+volumes:
+  pg_data:
+    name: moncada_pg_data
