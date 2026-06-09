@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Moncada Gold — Inventario</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #c9a84c 100%);
+      color: #fff;
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    header h1 { font-size: 1.8rem; letter-spacing: 1px; }
+    header h1 span { color: #f0c96e; }
+    header p { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+    .status-badge {
+      background: #22c55e;
+      color: #fff;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    main { max-width: 1100px; margin: 40px auto; padding: 0 24px; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      border-left: 4px solid #c9a84c;
+    }
+    .stat-card .label { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; margin-top: 4px; }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header h2 { font-size: 1.1rem; color: #1a1a2e; }
+
+    .search-box {
+      padding: 8px 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      width: 220px;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: #c9a84c; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      background: #1a1a2e;
+      color: #f0c96e;
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: #fdf8ee; }
+    tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 0.92rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-anillos   { background: #fef3c7; color: #92400e; }
+    .badge-collares  { background: #dbeafe; color: #1e40af; }
+    .badge-pulseras  { background: #d1fae5; color: #065f46; }
+    .badge-aretes    { background: #fce7f3; color: #9d174d; }
+    .badge-cadenas   { background: #ede9fe; color: #5b21b6; }
+    .badge-dijes     { background: #ffedd5; color: #9a3412; }
+
+    .stock-ok   { color: #16a34a; font-weight: 600; }
+    .stock-low  { color: #d97706; font-weight: 600; }
+    .stock-out  { color: #dc2626; font-weight: 600; }
+
+    .precio { font-weight: 600; color: #1a1a2e; }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: #aaa;
+      font-size: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 700px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      header { flex-direction: column; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span>Moncada</span> Gold</h1>
+    <p>Sistema de Inventario · Integración Continua POLIGRAN</p>
+  </div>
+  <span class="status-badge" id="status-badge">Conectando...</span>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat-card">
+      <div class="label">Total productos</div>
+      <div class="value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Unidades en stock</div>
+      <div class="value" id="stat-stock">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Categorías</div>
+      <div class="value" id="stat-cats">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Precio promedio</div>
+      <div class="value" id="stat-precio">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2>Inventario de Joyas</h2>
+      <input class="search-box" type="text" id="search" placeholder="Buscar producto..." oninput="filtrar()" />
+    </div>
+    <div id="tabla-container">
+      <div class="loading">Cargando inventario...</div>
+    </div>
+  </div>
+</main>
+
+<footer>Moncada Gold Inventory · Flask + PostgreSQL + Docker · 2026 · Desarrollado por <strong>Mateo Moncada</strong></footer>
+
+<script>
+  let productos = [];
+
+  async function cargar() {
+    try {
+      const [healthRes, prodRes] = await Promise.all([
+        fetch('/health'),
+        fetch('/productos')
+      ]);
+      const health = await healthRes.json();
+      productos = await prodRes.json();
+
+      document.getElementById('status-badge').textContent =
+        health.status === 'ok' ? '● API conectada' : '● Error';
+      document.getElementById('status-badge').style.background =
+        health.status === 'ok' ? '#22c55e' : '#ef4444';
+
+      actualizarStats();
+      renderTabla(productos);
+    } catch (e) {
+      document.getElementById('tabla-container').innerHTML =
+        '<div class="loading">Error al conectar con la API</div>';
+      document.getElementById('status-badge').textContent = '● Sin conexión';
+      document.getElementById('status-badge').style.background = '#ef4444';
+    }
+  }
+
+  function actualizarStats() {
+    document.getElementById('stat-total').textContent = productos.length;
+    document.getElementById('stat-stock').textContent =
+      productos.reduce((s, p) => s + p.stock, 0).toLocaleString('es-CO');
+    document.getElementById('stat-cats').textContent =
+      new Set(productos.map(p => p.categoria)).size;
+    const prom = productos.reduce((s, p) => s + p.precio, 0) / productos.length;
+    document.getElementById('stat-precio').textContent =
+      '$' + Math.round(prom).toLocaleString('es-CO');
+  }
+
+  function stockClass(s) {
+    if (s === 0) return 'stock-out';
+    if (s <= 5) return 'stock-low';
+    return 'stock-ok';
+  }
+
+  function renderTabla(lista) {
+    if (!lista.length) {
+      document.getElementById('tabla-container').innerHTML =
+        '<div class="loading">No se encontraron productos.</div>';
+      return;
+    }
+    const filas = lista.map(p => `
+      <tr>
+        <td><strong>${p.nombre}</strong></td>
+        <td><span class="badge badge-${p.categoria}">${p.categoria}</span></td>
+        <td>${p.material}</td>
+        <td class="precio">$${p.precio.toLocaleString('es-CO')}</td>
+        <td class="${stockClass(p.stock)}">${p.stock} uds.</td>
+      </tr>`).join('');
+
+    document.getElementById('tabla-container').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Material</th>
+            <th>Precio (COP)</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  function filtrar() {
+    const q = document.getElementById('search').value.toLowerCase();
+    renderTabla(productos.filter(p =>
+      p.nombre.toLowerCase().includes(q) ||
+      p.categoria.toLowerCase().includes(q) ||
+      p.material.toLowerCase().includes(q)
+    ));
+  }
+
+  cargar();
+</script>
+</body>
+</html>
